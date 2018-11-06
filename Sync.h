@@ -12,6 +12,7 @@
 #include <utime.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <thread>
 #include <fcntl.h>
 #include "Sync.h"
 #include "File.h"
@@ -22,6 +23,8 @@ class Sync {
 public:
     Sync();
     void Updater(char*, char*);
+    void Sentinel();
+    void Syncronize(struct dirent*);
 private:
     std::vector<File> Documents;
 
