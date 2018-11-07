@@ -25,6 +25,7 @@ public:
     void Updater(char*, char*);
     void Sentinel();
     void Syncronize(struct dirent*);
+    int Curling(std::string, char*);
 private:
     std::vector<File> Documents;
 

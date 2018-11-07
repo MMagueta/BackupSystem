@@ -12,6 +12,7 @@ public:
     File(std::string);
 private:
     std::vector<std::vector<int>> Blocks;
+    std::vector<bool> Flags;
     std::string Path;
     struct stat Stat;
 

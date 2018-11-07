@@ -1,8 +1,44 @@
 #include "Sync.h"
 #include <iostream>
+#include <string>
+#include "Barrier.h"
+#include <curl/curl.h>
 
 Sync::Sync(){
 	
+}
+
+int Sync::Curling(std::string url, char* data){
+  CURL *curl;
+  CURLcode res;
+
+  /* In windows, this will init the winsock stuff */ 
+  curl_global_init(CURL_GLOBAL_ALL);
+
+  /* get a curl handle */ 
+  curl = curl_easy_init();
+  if(curl) {
+    /* First set the URL that is about to receive our POST. This URL can
+       just as well be a https:// URL if that is what should receive the
+       data. */
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    /* Now specify the POST data */ 
+	std::string str("data=" + std::string(data));
+	std::cout << str << std::endl;
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, str.c_str());
+
+    /* Perform the request, res will get the return code */ 
+    res = curl_easy_perform(curl);
+    /* Check for errors */ 
+    if(res != CURLE_OK)
+      fprintf(stderr, "curl_easy_perform() failed: %s\n",
+              curl_easy_strerror(res));
+
+    /* always cleanup */ 
+    curl_easy_cleanup(curl);
+  }
+  curl_global_cleanup();
+  return 0;
 }
 
 void Sync::Syncronize(struct dirent* documentos){
@@ -15,7 +51,7 @@ void Sync::Syncronize(struct dirent* documentos){
 		sprintf(string2, "./documentos/%s", documentos->d_name);
 		stat(string, &buffer_bak);
 		stat(string2, &buffer_doc);
-		if(open(string, O_RDONLY) == -1){
+		if(open(string, O_RDONLY) == -1){//Se o arquivo nao existe
 			open(string, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 			obj.Updater(string2, string);
 			printf("Sincronizado: %s\n", string);
@@ -27,7 +63,7 @@ void Sync::Syncronize(struct dirent* documentos){
 }
 
 void Sync::Sentinel(){
-	while(1){
+	while(true){
 		std::cout << "Sync..." << std::endl;
 		
 		struct dirent **doc;
@@ -112,10 +148,13 @@ void Sync::Updater(char* cur, char* bkp){
 	
 	n = 0;
 	
-	for(i=0;i<=div;i++){
-	
+	for(i = 0; i <= div; i++){
+		
+		
 		r1 = read(fd1,buff1,BLOCO);
 		r2 = read(fd2,buff2,BLOCO);
+		
+		this->Curling("http://localhost:8000/store/", buff1);
 		
 		if(strcmp(buff1,buff2)!=0){
 			size1 = (size_t)r1;
@@ -124,6 +163,7 @@ void Sync::Updater(char* cur, char* bkp){
 			if(strcmp(buff1,buff2) != 0){
 				
 				w1 = write(fd2,buff1,size1);
+				
 			
 				n = n+BLOCO;
 				lseek(fd1,n,SEEK_SET);
@@ -136,5 +176,7 @@ void Sync::Updater(char* cur, char* bkp){
 			}
 		}
 	}
+	
+	
 }
 

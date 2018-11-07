@@ -7,9 +7,7 @@
 #include <thread>
 #include <semaphore.h>
 #include "Sync.h"
-#include "Semaphore.h"
 #include "File.h"
-
 
 int main(int argc, char **argv) {
 	
@@ -20,6 +18,7 @@ int main(int argc, char **argv) {
 	std::thread T(&Sync::Sentinel, s_ptr);
 	T.join();
 	delete s_ptr;
+	
 	printf("---------------------\n");
 
 	return 0;
