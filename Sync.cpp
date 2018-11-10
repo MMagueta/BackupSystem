@@ -6,9 +6,14 @@
 char buff1[BLOCO];
 char buff2[BLOCO];
 
+<<<<<<< HEAD
 Sync::Sync(sem_t* sem_buff1, sem_t* sem_buff2){
 	this->sem_buff1 = sem_buff1;
 	this->sem_buff2 = sem_buff2;
+=======
+Sync::Sync(sem_t* semaforo){
+	this->semaforo = semaforo;
+>>>>>>> 5434c105665a869e013ca9e8696b0d2b1c67be5f
 }
 
 int Sync::Curling(std::string url, char* data){
@@ -116,7 +121,11 @@ void Sync::Sentinel(){
 		}
 		
 		std::vector<std::thread> T;
+<<<<<<< HEAD
 		Sync sync_ptr(this->sem_buff1, this->sem_buff2);
+=======
+		Sync sync_ptr(this->semaforo);
+>>>>>>> 5434c105665a869e013ca9e8696b0d2b1c67be5f
 		
 		for(i = 0; i < new_tam_doc; i++){
 			T.push_back(std::thread(&Sync::Syncronize, &sync_ptr, new_doc[i]));
@@ -152,9 +161,15 @@ void Sync::Updater(char* cur, char* bkp){
 	
 	for(i = 0; i <= div; i++){
 		
+<<<<<<< HEAD
 		sem_wait(this->sem_buff1);
 		r1 = read(fd1,buff1,BLOCO);
 		sem_wait(this->sem_buff2);
+=======
+		sem_wait(this->semaforo);
+		
+		r1 = read(fd1,buff1,BLOCO);
+>>>>>>> 5434c105665a869e013ca9e8696b0d2b1c67be5f
 		r2 = read(fd2,buff2,BLOCO);
 		
 		//
@@ -181,8 +196,12 @@ void Sync::Updater(char* cur, char* bkp){
 				bzero(buff2, BLOCO);	
 			}
 		}
+<<<<<<< HEAD
 		sem_post(this->sem_buff1);
 		sem_post(this->sem_buff2);
+=======
+		sem_post(this->semaforo);
+>>>>>>> 5434c105665a869e013ca9e8696b0d2b1c67be5f
 	}
 	
 	

@@ -24,13 +24,21 @@
 
 class Sync {
 public:
+<<<<<<< HEAD
     Sync(sem_t*, sem_t*);
+=======
+    Sync(sem_t*);
+>>>>>>> 5434c105665a869e013ca9e8696b0d2b1c67be5f
     void Updater(char*, char*);
     void Sentinel();
     void Syncronize(struct dirent*);
     int Curling(std::string, char*);
+<<<<<<< HEAD
     sem_t* sem_buff1;
     sem_t* sem_buff2;
+=======
+    sem_t* semaforo;
+>>>>>>> 5434c105665a869e013ca9e8696b0d2b1c67be5f
     Sync* sync_ptr;
     
 private:
