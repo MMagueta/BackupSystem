@@ -14,10 +14,14 @@ int main(int argc, char **argv) {
 	//File f("./documentos/teste.txt");
 	//std::cout << f.Blocks[2][1] << std::endl;
 	
-	Sync * s_ptr;
-	std::thread T(&Sync::Sentinel, s_ptr);
+	sem_t semaforo;
+	
+	Sync s_ptr(&semaforo);
+	sem_init(s_ptr.semaforo, 0, 1);
+	s_ptr.sync_ptr = &s_ptr;
+	std::thread T(&Sync::Sentinel, &s_ptr);
 	T.join();
-	delete s_ptr;
+	delete &s_ptr;
 	
 	printf("---------------------\n");
 

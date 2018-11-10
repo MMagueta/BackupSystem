@@ -1,11 +1,13 @@
 #include "Sync.h"
 #include <iostream>
 #include <string>
-#include "Barrier.h"
 #include <curl/curl.h>
 
-Sync::Sync(){
-	
+char buff1[BLOCO];
+char buff2[BLOCO];
+
+Sync::Sync(sem_t* semaforo){
+	this->semaforo = semaforo;
 }
 
 int Sync::Curling(std::string url, char* data){
@@ -42,7 +44,7 @@ int Sync::Curling(std::string url, char* data){
 }
 
 void Sync::Syncronize(struct dirent* documentos){
-	Sync obj;
+
 	struct stat buffer_doc, buffer_bak;
 	if(documentos->d_type == DT_REG){
 		char string[250];
@@ -53,10 +55,10 @@ void Sync::Syncronize(struct dirent* documentos){
 		stat(string2, &buffer_doc);
 		if(open(string, O_RDONLY) == -1){//Se o arquivo nao existe
 			open(string, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-			obj.Updater(string2, string);
+			this->Updater(string2, string);
 			printf("Sincronizado: %s\n", string);
 		}else if(buffer_doc.st_mtime > buffer_bak.st_mtime){
-			obj.Updater(string2, string);
+			this->Updater(string2, string);
 			printf("Sincronizado: %s\n", string);
 		}
 	}
@@ -113,10 +115,10 @@ void Sync::Sentinel(){
 		}
 		
 		std::vector<std::thread> T;
-		Sync *sync_ptr;
+		Sync sync_ptr(this->semaforo);
 		
 		for(i = 0; i < new_tam_doc; i++){
-			T.push_back(std::thread(&Sync::Syncronize, sync_ptr, new_doc[i]));
+			T.push_back(std::thread(&Sync::Syncronize, &sync_ptr, new_doc[i]));
 		}
 		for(i = 0; i < new_tam_doc; i++){
 			T[i].join();
@@ -133,8 +135,7 @@ void Sync::Updater(char* cur, char* bkp){
 	struct stat bkp_stat;
 	stat(bkp, &bkp_stat);
 	
-	char buff1[BLOCO];
-	char buff2[BLOCO];
+	
 	
 	int fd1 = open(cur, O_RDONLY);
 	int fd2 = open(bkp, O_WRONLY);
@@ -150,11 +151,16 @@ void Sync::Updater(char* cur, char* bkp){
 	
 	for(i = 0; i <= div; i++){
 		
+		sem_wait(this->semaforo);
 		
 		r1 = read(fd1,buff1,BLOCO);
 		r2 = read(fd2,buff2,BLOCO);
 		
-		this->Curling("http://localhost:8000/store/", buff1);
+		//
+		
+		//this->Curling("http://localhost:8000/store/", buff1);
+		
+		//
 		
 		if(strcmp(buff1,buff2)!=0){
 			size1 = (size_t)r1;
@@ -164,7 +170,6 @@ void Sync::Updater(char* cur, char* bkp){
 				
 				w1 = write(fd2,buff1,size1);
 				
-			
 				n = n+BLOCO;
 				lseek(fd1,n,SEEK_SET);
 				lseek(fd2,n,SEEK_SET);
@@ -175,6 +180,7 @@ void Sync::Updater(char* cur, char* bkp){
 				bzero(buff2, BLOCO);	
 			}
 		}
+		sem_post(this->semaforo);
 	}
 	
 	
