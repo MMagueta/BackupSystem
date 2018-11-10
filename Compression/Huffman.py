@@ -37,41 +37,68 @@ def Huffman_Encode(archive, code):
 	with open('BAK_'+archive,'wb') as file:
 		text = ''
 		bin_conv = lambda text: map(lambda x:int(x,2), [text[i*8:(i+1)*8] for i in range((len(text)+8-1)//8)]) #Quebra de 8 em 8 e codifica os bytes
+
+
 		for elem in list(open(archive, 'r').read()):
 			text += code[elem]
+		print(text)
+		print(list(bin_conv(text)))
 		file.write(bytes(bin_conv(text)))
+		file.close()
+		file = open("." + archive + "_HEADER","w")
+		file.write(text[len(text)-9:])
 		file.close()
 
 def Huffman_Decode(archive,code):
 	with open('BAK_'+archive,'rb') as file:
+		from bitarray import bitarray
+		import operator
 		
 		text = ""
 		byte = file.read(1)
-		while(byte != b''):
-			try:
-				byte = ord(byte)
-				text += bin(byte)[2:].rjust(8, '0')
-				#print(text)
-				byte = file.read(1)
-			except:
-				pass
+		while byte != b"":
+			a = bitarray(endian='big')
+			a.frombytes(byte)
+			#print(byte)
+			text += reduce(operator.add, list(map(lambda b: '1' if b else '0', a.tolist())))
+			#print(reduce(operator.add, list(map(lambda b: '1' if b else '0', a.tolist()))))
+			byte = file.read(1)
 		decoder = lambda text,code,x,y: list(filter(lambda elem: len(elem)==1,(Huffman_Find(code,text[x:-len(text)+i]) for i in range(x,y))))
 		max_len_code = lambda code: len(code[sorted(code, key=lambda x: len(code[x]))[-1]])
-		#print(decoder(text, code, 11, 16))
+		check = open("."+archive+"_HEADER",'r').read()
+		text = list(text)
+		i = 1
+		flag = True	
+		while flag:
+			while i <= 8:
+				if text[-i] != check[-i]:
+					text.pop(-i)
+					i = 0
+				i += 1
+			else:
+				flag = False
+		text = reduce(operator.add, list(map(lambda b: '1' if b == '1' else '0', text)))
+
 		print(text)
+		
 		i = 0
 		j = 0
+		mapping = []
 		while i <= len(text):
 			while j <= len(text):
 				if decoder(text,code,i,j) != []:
-					print(decoder(text,code,i,j))
+					mapping.append(decoder(text,code,i,j))
 					#print(i,j)
 					i = j-1
 					#print(i,j)
 					if i >= len(text): break
 				j+=1
 			i+=1
-		
+		file.close()
+	file = open("DEC_"+archive,'a')
+	for m in mapping:
+		file.write(list(m[0].keys())[0])
+	file.write(" ")
 
 
 if __name__=="__main__":
